@@ -88,7 +88,7 @@
 // }
 'use client'
 
-import { useState, useRef } from 'react';
+import { useState, useRef, MouseEvent } from 'react';
 import { SplineScene } from "@/components/ui/splite";
 import { Card } from "@/components/ui/cards";
 import { SplashCursor } from "@/components/ui/splash-cursor";
@@ -96,30 +96,30 @@ import MyComponent from './mybutton';
 import MyButton from './mybutton';
 
 export function SplineSceneBasic() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [isButtonHighlighted, setIsButtonHighlighted] = useState(false);
-  const buttonRef = useRef(null);
-
-  const handleDoubleClick = () => {
-    setIsDarkMode(prevMode => !prevMode);
-  };
-
-  const handleMouseMove = (e) => {
-    if (buttonRef.current) {
-      const buttonRect = buttonRef.current.getBoundingClientRect();
-      const cursorX = e.clientX;
-      const cursorY = e.clientY;
-
-      // Check if the cursor is near the button
-      const isNearButton =
-        cursorX >= buttonRect.left - 20 &&
-        cursorX <= buttonRect.right + 20 &&
-        cursorY >= buttonRect.top - 20 &&
-        cursorY <= buttonRect.bottom + 20;
-
-      setIsButtonHighlighted(isNearButton);
-    }
-  };
+    const [isDarkMode, setIsDarkMode] = useState(false);
+    const [isButtonHighlighted, setIsButtonHighlighted] = useState(false);
+    const buttonRef = useRef<HTMLButtonElement | null>(null);
+  
+    const handleDoubleClick = (): void => {
+      setIsDarkMode(prevMode => !prevMode);
+    };
+  
+    const handleMouseMove = (e: MouseEvent<HTMLDivElement>): void => {
+      if (buttonRef.current) {
+        const buttonRect = buttonRef.current.getBoundingClientRect();
+        const cursorX = e.clientX;
+        const cursorY = e.clientY;
+  
+        const isNearButton =
+          cursorX >= buttonRect.left - 20 &&
+          cursorX <= buttonRect.right + 20 &&
+          cursorY >= buttonRect.top - 20 &&
+          cursorY <= buttonRect.bottom + 20;
+  
+        setIsButtonHighlighted(isNearButton);
+      }
+    };
+  
 
   return (
 //     <Card className={`w-screen h-screen ${isDarkMode ? 'bg-black/[0.96]' : 'bg-white/[0.96]'} fixed inset-0 overflow-hidden`}>
