@@ -200,9 +200,9 @@ export function SplineSceneBasic() {
           <div className="flex flex-col mx-auto justify-center text-center items-center py-10 md:py-20">
           <MyButton
   ref={buttonRef} // Now valid
-  text="Sparkle Button"
+  text="Connect with me!"
   size="lg"
-  href="https://mustafa-mallebhari.vercel.app"
+  href="https://example.com"
   className={`z-20 transition-all duration-300 ${
     isButtonHighlighted ? 'scale-110 brightness-125' : ''
   }`}

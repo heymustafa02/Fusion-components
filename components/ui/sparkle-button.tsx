@@ -1,41 +1,44 @@
-              
-import React, { CSSProperties, useEffect, useRef, useState } from "react"
-
-import { Button } from "../ui/button"
+import React, { CSSProperties, useEffect, useRef, useState } from "react";
+import { Button } from "../ui/button";
 
 const RANDOM = (min: number, max: number) =>
-  Math.floor(Math.random() * (max - min + 1) + min)
+  Math.floor(Math.random() * (max - min + 1) + min);
+
+// Extend CSSProperties to include custom properties
+type CustomCSSProperties = CSSProperties & {
+  [key: `--${string}`]: string | number | undefined;
+};
 
 interface SparkleProps {
-  text: string
-  size: string
-  variant: string
+  text: string;
+  size: "default" | "sm" | "lg" | "icon";
+  variant: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
 }
 
 const SparkleButton = ({ text, size, variant }: SparkleProps) => {
-  const [isActive, setIsActive] = useState(false)
-  const particlesRef = useRef<Array<HTMLDivElement | null>>([])
+  const [isActive, setIsActive] = useState(false);
+  const particlesRef = useRef<Array<HTMLDivElement | null>>([]);
 
   useEffect(() => {
     particlesRef.current.forEach((P) => {
       if (P) {
-        P.style.setProperty("--x", `${RANDOM(20, 80)}`)
-        P.style.setProperty("--y", `${RANDOM(20, 80)}`)
-        P.style.setProperty("--duration", `${RANDOM(6, 20)}`)
-        P.style.setProperty("--delay", `${RANDOM(1, 10)}`)
-        P.style.setProperty("--alpha", `${RANDOM(40, 90) / 100}`)
+        P.style.setProperty("--x", `${RANDOM(20, 80)}`);
+        P.style.setProperty("--y", `${RANDOM(20, 80)}`);
+        P.style.setProperty("--duration", `${RANDOM(6, 20)}`);
+        P.style.setProperty("--delay", `${RANDOM(1, 10)}`);
+        P.style.setProperty("--alpha", `${RANDOM(40, 90) / 100}`);
         P.style.setProperty(
           "--origin-x",
           `${Math.random() > 0.5 ? RANDOM(300, 800) * -1 : RANDOM(300, 800)}%`
-        )
+        );
         P.style.setProperty(
           "--origin-y",
           `${Math.random() > 0.5 ? RANDOM(300, 800) * -1 : RANDOM(300, 800)}%`
-        )
-        P.style.setProperty("--size", `${RANDOM(40, 90) / 100}`)
+        );
+        P.style.setProperty("--size", `${RANDOM(40, 90) / 100}`);
       }
-    })
-  }, [])
+    });
+  }, []);
 
   return (
     <div className="flex items-center justify-center w-full h-full bg-transparent overflow-hidden">
@@ -69,11 +72,11 @@ const SparkleButton = ({ text, size, variant }: SparkleProps) => {
               0 -0.05em 0 0 hsl(260 calc(var(--active) * 97%) calc(var(--active) * 60%)) inset
             `,
               transform: `scale(calc(1 + (var(--active) * 0.1)))`,
-            } as CSSProperties
+            } as CustomCSSProperties
           }
         >
           <span
-            className="text relative z-10 translate-x-[2%] -translate-y-[6%] "
+            className="text relative z-10 translate-x-[2%] -translate-y-[6%]"
             style={{
               background: `linear-gradient(90deg, hsl(0 0% calc((var(--active) * 100%) + 65%)), hsl(0 0% calc((var(--active) * 100%) + 26%)))`,
               WebkitBackgroundClip: "text",
@@ -96,10 +99,9 @@ const SparkleButton = ({ text, size, variant }: SparkleProps) => {
               strokeLinejoin="round"
               style={{
                 color: `hsl(0 0% calc((var(--active, 0) * 70%) + 20%))`,
-                // animation: isActive ? 'bounce 0.6s' : 'none',
                 animationDelay: "calc((0.25s * 1.5) + (0.1s * 1s))",
                 "--scale": "0.5",
-              }}
+              } as CustomCSSProperties}
             />
             <path
               d="M15 12H3"
@@ -109,10 +111,9 @@ const SparkleButton = ({ text, size, variant }: SparkleProps) => {
               strokeLinejoin="round"
               style={{
                 color: `hsl(0 0% calc((var(--active, 0) * 70%) + 20%))`,
-                // animation: isActive ? 'bounce 0.6s' : 'none',
                 animationDelay: "calc((0.25s * 1.5) + (0.2s * 1s))",
                 "--scale": "1.5",
-              }}
+              } as CustomCSSProperties}
             />
           </svg>
           <div
@@ -126,8 +127,7 @@ const SparkleButton = ({ text, size, variant }: SparkleProps) => {
               className="spark-rotate absolute w-[200%] aspect-square top-0 left-1/2 -translate-x-1/2 -translate-y-[15%] -rotate-90 animate-rotate"
               style={{
                 opacity: `calc((var(--active)) + 0.4)`,
-                background:
-                  "conic-gradient(from 0deg, transparent 0 340deg, white 360deg)",
+                background: "conic-gradient(from 0deg, transparent 0 340deg, white 360deg)",
               }}
             />
           </div>
@@ -160,26 +160,27 @@ const SparkleButton = ({ text, size, variant }: SparkleProps) => {
           }}
         >
           {[...Array(20)].map((_, index) => (
-            <div
-              key={index}
-              ref={(el) => (particlesRef.current[index] = el)}
-              className="particle absolute animate-float-out"
-              style={
-                {
-                  "--duration": `calc(var(--duration, 1) * 1s)`,
-                  "--delay": `calc(var(--delay, 0) * -1s)`,
-                  width: "calc(var(--size, 0.25) * 1rem)",
-                  aspectRatio: "1",
-                  top: "calc(var(--y, 50) * 1%)",
-                  left: "calc(var(--x, 50) * 1%)",
-                  opacity: "var(--alpha, 1)",
-                  animationDirection: index % 2 === 0 ? "reverse" : "normal",
-                  animationPlayState: isActive ? "running" : "paused",
-                  transformOrigin:
-                    "var(--origin-x, 1000%) var(--origin-y, 1000%)",
-                } as CSSProperties
-              }
-            >
+  <div
+    key={index}
+    ref={(el) => {
+      particlesRef.current[index] = el;
+    }}
+    className="particle absolute animate-float-out"
+    style={
+      {
+        "--duration": `calc(var(--duration, 1) * 1s)`,
+        "--delay": `calc(var(--delay, 0) * -1s)`,
+        width: "calc(var(--size, 0.25) * 1rem)",
+        aspectRatio: "1",
+        top: "calc(var(--y, 50) * 1%)",
+        left: "calc(var(--x, 50) * 1%)",
+        opacity: "var(--alpha, 1)",
+        animationDirection: index % 2 === 0 ? "reverse" : "normal",
+        animationPlayState: isActive ? "running" : "paused",
+        transformOrigin: "var(--origin-x, 1000%) var(--origin-y, 1000%)",
+      } as CustomCSSProperties
+    }
+  >
               <svg
                 width="100%"
                 height="100%"
@@ -197,7 +198,7 @@ const SparkleButton = ({ text, size, variant }: SparkleProps) => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default SparkleButton
+export default SparkleButton;

@@ -5,9 +5,9 @@ import React from "react";
 // Define the props for MyButton
 interface MyButtonProps {
   text: string;
-  size?: string;
+  size?: string; // Optional prop
   href: string;
-  className?: string;
+  className?: string; // Optional prop
 }
 
 // Use React.forwardRef to forward the ref to the <a> tag
@@ -20,7 +20,7 @@ const MyButton = React.forwardRef<HTMLAnchorElement, MyButtonProps>(
         target="_blank"
         rel="noopener noreferrer"
         style={{
-          textDecoration: "none",
+          textDecoration: "none", // Removes the underline from the link
         }}
         className={className} // Pass the className prop
       >
