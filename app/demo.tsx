@@ -198,15 +198,15 @@ export function SplineSceneBasic() {
         {/* Left content - Full width on mobile, half on desktop */}
         <div className="w-full md:w-1/2 p-4 md:p-8 relative z-10 flex flex-col justify-start md:justify-center">
           <div className="flex flex-col mx-auto justify-center text-center items-center py-10 md:py-20">
-            <MyButton
-              ref={buttonRef} // Corrected prop name
-              text="Sparkle Button"
-              size="lg"
-              href="https://example.com"
-              className={`z-20 transition-all duration-300 ${
-                isButtonHighlighted ? 'scale-110 brightness-125' : ''
-              }`}
-            />
+          <MyButton
+  ref={buttonRef} // Now valid
+  text="Sparkle Button"
+  size="lg"
+  href="https://mustafa-mallebhari.vercel.app"
+  className={`z-20 transition-all duration-300 ${
+    isButtonHighlighted ? 'scale-110 brightness-125' : ''
+  }`}
+/>
           </div>
         </div>
 
