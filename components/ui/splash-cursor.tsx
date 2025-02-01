@@ -1,6 +1,34 @@
 "use client";
 import { useEffect, useRef } from "react";
 
+// Define an interface for the pointer properties
+interface Pointer {
+  id: number;
+  texcoordX: number;
+  texcoordY: number;
+  prevTexcoordX: number;
+  prevTexcoordY: number;
+  deltaX: number;
+  deltaY: number;
+  down: boolean;
+  moved: boolean;
+  color: number[];
+}
+
+// Use a class instead of a function for proper 'this' binding
+class PointerPrototype implements Pointer {
+  id: number = -1;
+  texcoordX: number = 0;
+  texcoordY: number = 0;
+  prevTexcoordX: number = 0;
+  prevTexcoordY: number = 0;
+  deltaX: number = 0;
+  deltaY: number = 0;
+  down: boolean = false;
+  moved: boolean = false;
+  color: number[] = [30, 0, 300];
+}
+
 function SplashCursor({
   // Add whatever props you like for customization
   SIM_RESOLUTION = 128,
@@ -24,18 +52,9 @@ function SplashCursor({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    function pointerPrototype() {
-      this.id = -1;
-      this.texcoordX = 0;
-      this.texcoordY = 0;
-      this.prevTexcoordX = 0;
-      this.prevTexcoordY = 0;
-      this.deltaX = 0;
-      this.deltaY = 0;
-      this.down = false;
-      this.moved = false;
-      this.color = [0, 0, 0];
-    }
+    const createPointer = (): Pointer => {
+      return new PointerPrototype();
+    };
 
     let config = {
       SIM_RESOLUTION,
@@ -55,7 +74,7 @@ function SplashCursor({
       TRANSPARENT,
     };
 
-    let pointers = [new pointerPrototype()];
+    let pointers = [createPointer()];
 
     const { gl, ext } = getWebGLContext(canvas);
     if (!ext.supportLinearFiltering) {
@@ -171,15 +190,23 @@ function SplashCursor({
       return status === gl.FRAMEBUFFER_COMPLETE;
     }
 
+    // Add type definitions for the class properties and parameters
     class Material {
-      constructor(vertexShader, fragmentShaderSource) {
+      vertexShader: WebGLShader;
+      fragmentShaderSource: string;
+      programs: WebGLProgram[];
+      activeProgram: WebGLProgram | null;
+      uniforms: Record<string, WebGLUniformLocation>;
+
+      constructor(vertexShader: WebGLShader, fragmentShaderSource: string) {
         this.vertexShader = vertexShader;
         this.fragmentShaderSource = fragmentShaderSource;
         this.programs = [];
         this.activeProgram = null;
-        this.uniforms = [];
+        this.uniforms = {};
       }
-      setKeywords(keywords) {
+
+      setKeywords(keywords: string[]) {
         let hash = 0;
         for (let i = 0; i < keywords.length; i++) hash += hashCode(keywords[i]);
         let program = this.programs[hash];
@@ -196,53 +223,74 @@ function SplashCursor({
         this.uniforms = getUniforms(program);
         this.activeProgram = program;
       }
+
       bind() {
-        gl.useProgram(this.activeProgram);
+        if (this.activeProgram) {
+          gl.useProgram(this.activeProgram);
+        }
       }
     }
 
     class Program {
-      constructor(vertexShader, fragmentShader) {
+      uniforms: Record<string, WebGLUniformLocation>;
+      program: WebGLProgram;
+
+      constructor(vertexShader: WebGLShader, fragmentShader: WebGLShader) {
         this.uniforms = {};
         this.program = createProgram(vertexShader, fragmentShader);
         this.uniforms = getUniforms(this.program);
       }
+
       bind() {
         gl.useProgram(this.program);
       }
     }
 
-    function createProgram(vertexShader, fragmentShader) {
-      let program = gl.createProgram();
+    // Add return type annotations to functions
+    function createProgram(vertexShader: WebGLShader, fragmentShader: WebGLShader): WebGLProgram {
+      const program = gl.createProgram();
+      if (!program) throw new Error('Failed to create WebGL program');
+      
       gl.attachShader(program, vertexShader);
       gl.attachShader(program, fragmentShader);
       gl.linkProgram(program);
+      
       if (!gl.getProgramParameter(program, gl.LINK_STATUS))
         console.trace(gl.getProgramInfoLog(program));
       return program;
     }
 
-    function getUniforms(program) {
-      let uniforms = [];
-      let uniformCount = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
+    function getUniforms(program: WebGLProgram): Record<string, WebGLUniformLocation> {
+      const uniforms: Record<string, WebGLUniformLocation> = {};
+      const uniformCount = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS);
+      
       for (let i = 0; i < uniformCount; i++) {
-        let uniformName = gl.getActiveUniform(program, i).name;
-        uniforms[uniformName] = gl.getUniformLocation(program, uniformName);
+        const uniformInfo = gl.getActiveUniform(program, i);
+        if (uniformInfo) {
+          const uniformName = uniformInfo.name;
+          const location = gl.getUniformLocation(program, uniformName);
+          if (location) {
+            uniforms[uniformName] = location;
+          }
+        }
       }
       return uniforms;
     }
 
-    function compileShader(type, source, keywords) {
+    function compileShader(type: number, source: string, keywords?: string[]): WebGLShader {
       source = addKeywords(source, keywords);
       const shader = gl.createShader(type);
+      if (!shader) throw new Error('Failed to create WebGL shader');
+
       gl.shaderSource(shader, source);
       gl.compileShader(shader);
+      
       if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS))
         console.trace(gl.getShaderInfoLog(shader));
       return shader;
     }
 
-    function addKeywords(source, keywords) {
+    function addKeywords(source: string, keywords?: string[]): string {
       if (!keywords) return source;
       let keywordsString = "";
       keywords.forEach((keyword) => {
@@ -251,7 +299,18 @@ function SplashCursor({
       return keywordsString + source;
     }
 
-    const baseVertexShader = compileShader(
+    // You'll also need to declare the gl variable and hashCode function
+    declare const gl: WebGLRenderingContext;
+    function hashCode(str: string): number {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0; // Convert to 32-bit integer
+      }
+      return hash;
+    }
+
+    const baseVertexShader: WebGLShader = compileShader(
       gl.VERTEX_SHADER,
       `
         precision highp float;
@@ -274,7 +333,7 @@ function SplashCursor({
       `
     );
 
-    const copyShader = compileShader(
+    const copyShader: WebGLShader = compileShader(
       gl.FRAGMENT_SHADER,
       `
         precision mediump float;
@@ -288,7 +347,7 @@ function SplashCursor({
       `
     );
 
-    const clearShader = compileShader(
+    const clearShader: WebGLShader = compileShader(
       gl.FRAGMENT_SHADER,
       `
         precision mediump float;
@@ -303,7 +362,7 @@ function SplashCursor({
      `
     );
 
-    const displayShaderSource = `
+    const displayShaderSource: string = `
       precision highp float;
       precision highp sampler2D;
       varying vec2 vUv;
@@ -344,7 +403,7 @@ function SplashCursor({
       }
     `;
 
-    const splatShader = compileShader(
+    const splatShader: WebGLShader = compileShader(
       gl.FRAGMENT_SHADER,
       `
         precision highp float;
@@ -366,7 +425,7 @@ function SplashCursor({
       `
     );
 
-    const advectionShader = compileShader(
+    const advectionShader: WebGLShader = compileShader(
       gl.FRAGMENT_SHADER,
       `
         precision highp float;
@@ -407,7 +466,7 @@ function SplashCursor({
       ext.supportLinearFiltering ? null : ["MANUAL_FILTERING"]
     );
 
-    const divergenceShader = compileShader(
+    const divergenceShader: WebGLShader = compileShader(
       gl.FRAGMENT_SHADER,
       `
         precision mediump float;
@@ -437,7 +496,7 @@ function SplashCursor({
       `
     );
 
-    const curlShader = compileShader(
+    const curlShader: WebGLShader = compileShader(
       gl.FRAGMENT_SHADER,
       `
         precision mediump float;
@@ -460,7 +519,7 @@ function SplashCursor({
       `
     );
 
-    const vorticityShader = compileShader(
+    const vorticityShader: WebGLShader = compileShader(
       gl.FRAGMENT_SHADER,
       `
         precision highp float;
@@ -495,7 +554,7 @@ function SplashCursor({
       `
     );
 
-    const pressureShader = compileShader(
+    const pressureShader: WebGLShader = compileShader(
       gl.FRAGMENT_SHADER,
       `
         precision mediump float;
@@ -521,7 +580,7 @@ function SplashCursor({
       `
     );
 
-    const gradientSubtractShader = compileShader(
+    const gradientSubtractShader: WebGLShader = compileShader(
       gl.FRAGMENT_SHADER,
       `
         precision mediump float;
@@ -1145,12 +1204,11 @@ function SplashCursor({
       return Math.floor(input * pixelRatio);
     }
 
-    function hashCode(s) {
-      if (s.length === 0) return 0;
+    function hashCode(str: string): number {
       let hash = 0;
-      for (let i = 0; i < s.length; i++) {
-        hash = (hash << 5) - hash + s.charCodeAt(i);
-        hash |= 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0; // Convert to 32-bit integer
       }
       return hash;
     }
